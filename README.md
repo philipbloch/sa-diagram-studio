@@ -4,8 +4,6 @@ A local web app that generates Shopify migration architecture diagrams from a pr
 
 Built for Shopify Solution Architects to rapidly produce client-ready technical diagrams for enterprise platform migrations.
 
-![SA Diagram Studio](static/shopify-bag.png)
-
 ## What it does
 
 Paste or upload a merchant's migration brief and get five Mermaid diagrams rendered instantly:
