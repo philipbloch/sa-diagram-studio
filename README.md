@@ -29,8 +29,8 @@ The only additional context layered in automatically is Shopify reference termin
 ## Requirements
 
 - Python 3.9+
-- Shopify internal `devx` CLI (for Claude API token)
-- Google Workspace MCP server (for Google Drive integration)
+- **Shopify Dev MCP** — via the Shopify internal `devx` CLI (`devx mcp`). Used to query `vault_search` and `grokt_search` for internal Shopify documentation, enriching diagram labels with accurate API names and integration patterns.
+- **Google Workspace MCP** — run via `~/.config/gworkspace-mcp/run-mcp.sh`. Used to fetch and read files from Google Drive when using the Drive input mode.
 
 ## Setup
 
