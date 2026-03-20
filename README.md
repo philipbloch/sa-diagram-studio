@@ -18,7 +18,9 @@ Paste or upload a merchant's migration brief and get five Mermaid diagrams rende
 | **Migration Phases** | Programme roadmap from Discovery through Post-Launch Optimisation |
 | **Order Sequence** | End-to-end order lifecycle: checkout → ERP/OMS → fulfillment → tracking |
 
-Each diagram uses accurate Shopify API names, integration patterns, and source platform migration terminology — no hallucinated or generic labels.
+All five diagrams are generated strictly from your input — only systems, integrations, data flows, and actors you explicitly describe will appear. Nothing is inferred or assumed. If you don't mention an OMS, there's no OMS in the sequence diagram.
+
+The only additional context layered in automatically is Shopify reference terminology fetched from internal documentation (via MCP), which improves label accuracy (e.g. "GraphQL Admin API" instead of a generic "Shopify API") without adding systems you didn't describe.
 
 ## Input modes
 
