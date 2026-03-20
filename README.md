@@ -61,10 +61,11 @@ SFCC, Magento / Adobe Commerce, Commercetools, SAP Hybris, HCL Commerce, Oracle 
 
 ## Stack
 
-- **Backend**: Python / Flask
+- **Languages**: Python, JavaScript
+- **Backend**: Flask
+- **Frontend**: Vanilla JS, Mermaid.js (client-side diagram rendering)
 - **AI**: Claude Opus 4.6 via Shopify's internal LLM proxy
-- **Diagrams**: Mermaid.js (rendered client-side)
-- **Context enrichment**: Shopify internal MCP (vault + grokt search)
+- **Context enrichment**: Shopify Dev MCP (vault + grokt search)
 - **Document input**: pypdf, Google Workspace MCP
 
 ---
