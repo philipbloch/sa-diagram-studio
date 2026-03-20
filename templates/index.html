@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SA Diagram Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      /* Shopify Polaris dark palette */
+      --bg-base:     #0a0a0a;
+      --bg-surface:  #141414;
+      --bg-raised:   #1c1c1c;
+      --bg-card:     #1c1c1c;
+      --border:      #2e2e2e;
+      --border-soft: #242424;
+      --text-primary:   #e3e3e3;
+      --text-secondary: #9e9e9e;
+      --text-muted:     #5c5c5c;
+      /* Shopify brand greens */
+      --green:        #96bf48;        /* Shopify logo green — decorative */
+      --green-action: #008060;        /* Polaris primary action green */
+      --green-dim:    rgba(0,128,96,.12);
+      --green-glow:   rgba(0,128,96,.25);
+      /* Diagram accent palette — Polaris-aligned */
+      --c-arch:   #96bf48;   /* Shopify green */
+      --c-flow:   #5c6ac4;   /* Polaris indigo */
+      --c-map:    #f49342;   /* Polaris orange */
+      --c-phases: #47c1bf;   /* Polaris teal */
+      --c-seq:    #e3821e;   /* Polaris amber */
+    }
+
+    /* ── Light theme overrides ── */
+    [data-theme="light"] {
+      --bg-base:     #f6f6f7;
+      --bg-surface:  #ffffff;
+      --bg-raised:   #f1f2f3;
+      --bg-card:     #ffffff;
+      --border:      #e1e3e5;
+      --border-soft: #ebebeb;
+      --text-primary:   #202223;
+      --text-secondary: #6d7175;
+      --text-muted:     #8c9196;
+      --green-dim:    rgba(0,128,96,.08);
+      --green-glow:   rgba(0,128,96,.15);
+    }
+    [data-theme="light"] header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+    }
+    [data-theme="light"] .code-panel { background: #f6f6f7; }
+    [data-theme="light"] .code-panel pre { color: #008060; }
+    [data-theme="light"] .shimmer {
+      background: linear-gradient(90deg, #e8e8e8 25%, #f0f0f0 50%, #e8e8e8 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s infinite;
+    }
+    [data-theme="light"] .header-badge {
+      background: rgba(0,128,96,.08);
+      border-color: rgba(0,128,96,.25);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ════════════════════════════════════════
+       HEADER
+    ════════════════════════════════════════ */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: #111111;
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+    }
+    /* Shopify green left accent */
+    header::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--green-action);
+    }
+
+    .logo-mark {
+      display: flex; align-items: center; justify-content: center;
+      color: var(--green-action);
+    }
+    .logo-mark svg { display: block; }
+
+    .header-text h1 {
+      font-size: 0.9rem; font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+    .header-text p { font-size: 0.68rem; color: var(--text-secondary); margin-top: 1px; }
+
+    .theme-toggle {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .theme-toggle:hover { background: var(--bg-raised); color: var(--text-primary); border-color: var(--text-secondary); }
+
+    .header-badge {
+      margin-left: 8px;
+      background: rgba(0,128,96,.12);
+      border: 1px solid rgba(0,128,96,.35);
+      color: #2db888;
+      font-size: 0.62rem; font-weight: 700;
+      padding: 3px 10px; border-radius: 20px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+
+    /* ════════════════════════════════════════
+       MAIN
+    ════════════════════════════════════════ */
+    .main { max-width: 1680px; margin: 0 auto; padding: 28px 32px 60px; }
+
+    /* ════════════════════════════════════════
+       INPUT PANEL
+    ════════════════════════════════════════ */
+    .input-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    /* Polaris top accent line */
+    .input-panel::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px; border-radius: 10px 10px 0 0;
+      background: var(--green-action);
+    }
+
+    .panel-label {
+      font-size: 0.65rem; font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 108px;
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-family: inherit; font-size: 0.875rem;
+      padding: 12px 14px;
+      resize: vertical;
+      line-height: 1.6;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea::placeholder { color: var(--text-muted); }
+    textarea:focus {
+      outline: none;
+      border-color: var(--green-action);
+      box-shadow: 0 0 0 2px rgba(0,128,96,.25);
+    }
+
+    /* context grid */
+    .context-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+    @media (max-width: 860px) { .context-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px) { .context-grid { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field-label {
+      font-size: 0.65rem; font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.09em;
+    }
+
+    /* custom select */
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: '';
+      position: absolute; right: 11px; top: 50%;
+      transform: translateY(-50%);
+      width: 0; height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid var(--text-secondary);
+      pointer-events: none;
+    }
+
+    select {
+      width: 100%;
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: inherit; font-size: 0.82rem;
+      padding: 8px 30px 8px 10px;
+      cursor: pointer;
+      appearance: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    select:focus {
+      outline: none;
+      border-color: var(--green-action);
+      box-shadow: 0 0 0 2px rgba(0,128,96,.25);
+    }
+    select option { background: var(--bg-raised); }
+
+
+    /* action row */
+    .action-row {
+      display: flex; justify-content: flex-end;
+      align-items: center; gap: 10px;
+      margin-top: 18px;
+    }
+
+    .hint { font-size: 0.7rem; color: var(--text-muted); }
+
+    /* Polaris primary button */
+    .btn-generate {
+      background: var(--green-action);
+      color: #ffffff;
+      border: none; border-radius: 8px;
+      padding: 10px 24px;
+      font-family: inherit; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+      box-shadow: 0 1px 0 rgba(0,0,0,.1), inset 0 -1px 0 rgba(0,0,0,.2);
+    }
+    .btn-generate:hover { background: #006e52; box-shadow: 0 2px 8px rgba(0,128,96,.4); }
+    .btn-generate:active { transform: scale(0.98); }
+    .btn-generate:disabled {
+      background: var(--bg-raised);
+      color: var(--text-muted);
+      box-shadow: none; cursor: not-allowed; transform: none;
+    }
+
+    .spinner {
+      width: 15px; height: 15px;
+      border: 2px solid rgba(255,255,255,.25);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin .65s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── error ── */
+    .error {
+      background: rgba(215,44,13,.08);
+      border: 1px solid rgba(215,44,13,.3);
+      border-left: 3px solid #d72c0d;
+      border-radius: 8px;
+      color: #ff6b6b;
+      padding: 12px 16px; font-size: 0.85rem;
+      margin-bottom: 20px; display: none;
+    }
+
+    /* ── save bar ── */
+    #saveBar {
+      display: none; align-items: center; justify-content: flex-end;
+      gap: 12px; margin-bottom: 20px;
+    }
+    .save-path {
+      font-size: 0.7rem; color: var(--text-muted);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    /* Polaris secondary button */
+    .btn-save {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-primary); border-radius: 8px;
+      padding: 8px 18px; font-family: inherit; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-save:hover { background: var(--bg-raised); border-color: var(--text-secondary); }
+    .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-save.done { background: var(--green-dim); border-color: var(--green-action); color: #2db888; }
+
+    /* ════════════════════════════════════════
+       STATUS BAR (generation progress)
+    ════════════════════════════════════════ */
+    #statusBar {
+      display: none;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green-action);
+      border-radius: 8px;
+      padding: 11px 16px;
+      margin-bottom: 20px;
+      align-items: center;
+      gap: 12px;
+    }
+    .status-pulse {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green-action);
+      flex-shrink: 0;
+    }
+    #statusText { font-size: 0.8rem; color: var(--text-secondary); }
+    .status-dots {
+      display: inline-block;
+      width: 1.6em;
+      text-align: left;
+    }
+    .status-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+    }
+
+    /* ════════════════════════════════════════
+       PLACEHOLDER SKELETONS
+    ════════════════════════════════════════ */
+    #placeholders {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 1100px) { #placeholders { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) { #placeholders { grid-template-columns: 1fr; } }
+
+    .skeleton-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      height: 260px;
+      padding: 20px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px;
+    }
+    .skeleton-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: var(--bg-raised);
+      display: grid; place-items: center;
+      font-size: 1.4rem; opacity: 0.3;
+    }
+    .skeleton-label {
+      font-size: 0.75rem; font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .skeleton-lines {
+      display: flex; flex-direction: column; gap: 7px; width: 80%;
+    }
+    .shimmer {
+      height: 8px; border-radius: 4px;
+      background: linear-gradient(90deg, var(--bg-raised) 25%, var(--bg-card) 50%, var(--bg-raised) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s infinite;
+    }
+    .shimmer:nth-child(2) { width: 70%; animation-delay: 0.15s; }
+    .shimmer:nth-child(3) { width: 50%; animation-delay: 0.3s; }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* ════════════════════════════════════════
+       DIAGRAM GRID
+    ════════════════════════════════════════ */
+    .diagrams-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 1200px) { .diagrams-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 680px)  { .diagrams-grid { grid-template-columns: 1fr; } }
+
+    .diagram-card {
+      --accent: #96bf48;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: box-shadow 0.25s, border-color 0.25s;
+    }
+    .diagram-card.wide { grid-column: span 2; }
+    @media (max-width: 1200px) { .diagram-card.wide { grid-column: span 1; } }
+
+    .diagram-card.visible {
+      display: block;
+      animation: cardIn 0.3s ease forwards;
+    }
+    @keyframes cardIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .diagram-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 4px 20px rgba(0,0,0,.5);
+    }
+
+    /* solid accent stripe — Polaris card style */
+    .card-stripe {
+      height: 3px;
+      background: var(--accent);
+    }
+
+    .card-header {
+      padding: 12px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg-raised);
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .card-title {
+      font-size: 0.72rem; font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .card-icon {
+      width: 22px; height: 22px; border-radius: 5px;
+      background: rgba(255,255,255,.05);
+      display: grid; place-items: center;
+      font-size: 0.8rem;
+    }
+
+    .card-desc {
+      font-size: 0.63rem; color: var(--text-secondary);
+      margin-top: 2px; font-weight: 400; text-transform: none; letter-spacing: 0;
+    }
+
+    .card-actions { display: flex; gap: 5px; align-items: center; }
+
+    .btn-xs {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 0.65rem; font-weight: 600;
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .btn-xs:hover { background: var(--bg-raised); color: var(--text-primary); border-color: var(--text-secondary); }
+    .btn-xs.active { background: var(--green-dim); color: #2db888; border-color: var(--green-action); }
+
+    /* render area */
+    .diagram-render {
+      padding: 20px;
+      min-height: 200px;
+      overflow: auto;
+      background: var(--bg-surface);
+    }
+    /* override mermaid's inline max-width so SVGs scale to full natural size */
+    .diagram-render svg {
+      display: block;
+      width: 100% !important;
+      max-width: none !important;
+      height: auto !important;
+    }
+    .render-error {
+      color: #ff6b6b; font-size: 0.75rem; padding: 16px;
+      background: rgba(215,44,13,.08); border-radius: 8px;
+      border: 1px solid rgba(215,44,13,.25);
+      white-space: pre-wrap; max-width: 100%;
+    }
+
+    /* code panel */
+    .code-panel {
+      display: none;
+      background: #060a10;
+      border-top: 1px solid var(--border-soft);
+    }
+    .code-panel pre {
+      font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: #7dd3fc;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.65;
+      padding: 14px 16px;
+    }
+
+    /* generating skeleton inside card */
+    .card-skeleton {
+      padding: 20px;
+      background: var(--bg-surface);
+      min-height: 200px;
+      display: flex; flex-direction: column; gap: 10px; justify-content: center;
+    }
+    .card-skeleton .shimmer { height: 10px; }
+
+    /* ── Input mode tabs ── */
+    .input-mode-toggle {
+      display: flex;
+      gap: 3px;
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px;
+      width: fit-content;
+      margin-bottom: 12px;
+    }
+    .input-tab {
+      background: transparent;
+      border: none;
+      border-radius: 5px;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 5px 14px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .input-tab.active {
+      background: var(--bg-raised);
+      color: var(--text-primary);
+    }
+
+    /* ── PDF drop zone ── */
+    .pdf-dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: var(--bg-base);
+    }
+    .pdf-dropzone:hover, .pdf-dropzone.drag-over {
+      border-color: var(--green-action);
+      background: var(--green-dim);
+    }
+    .dropzone-icon {
+      font-size: 2rem; margin-bottom: 10px; opacity: 0.5;
+    }
+    .dropzone-label {
+      font-size: 0.82rem; font-weight: 600; color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .dropzone-hint {
+      font-size: 0.7rem; color: var(--text-muted);
+    }
+    .pdf-status {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .pdf-status.loading {
+      background: var(--green-dim);
+      border: 1px solid rgba(0,128,96,.25);
+      color: #2db888;
+    }
+    .pdf-status.success {
+      background: var(--green-dim);
+      border: 1px solid var(--green-action);
+      color: #2db888;
+    }
+    .pdf-status.error {
+      background: rgba(215,44,13,.08);
+      border: 1px solid rgba(215,44,13,.3);
+      color: #ff6b6b;
+    }
+    .pdf-clear {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid currentColor;
+      border-radius: 5px;
+      color: inherit;
+      font-family: inherit;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      cursor: pointer;
+      opacity: 0.8;
+    }
+    .pdf-clear:hover { opacity: 1; }
+
+    /* ── Google Drive panel ── */
+    .drive-url-row {
+      display: flex; gap: 8px;
+    }
+    .drive-input {
+      flex: 1;
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: inherit; font-size: 0.875rem;
+      padding: 8px 12px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .drive-input::placeholder { color: var(--text-muted); }
+    .drive-input:focus {
+      outline: none;
+      border-color: var(--green-action);
+      box-shadow: 0 0 0 2px rgba(0,128,96,.25);
+    }
+    .btn-drive-load {
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: inherit; font-size: 0.82rem; font-weight: 600;
+      padding: 8px 16px; cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .btn-drive-load:hover { background: var(--border); }
+    .btn-drive-load:disabled { opacity: 0.5; cursor: not-allowed; }
+    .drive-status {
+      margin-top: 10px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .drive-status.loading { background: var(--green-dim); border: 1px solid rgba(0,128,96,.25); color: #2db888; }
+    .drive-status.success { background: var(--green-dim); border: 1px solid var(--green-action); color: #2db888; }
+    .drive-status.error   { background: rgba(215,44,13,.08); border: 1px solid rgba(215,44,13,.3); color: #ff6b6b; }
+
+    /* ── divider label ── */
+    .section-divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 28px 0 16px;
+      color: var(--text-muted);
+      font-size: 0.65rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .section-divider::before, .section-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border-soft);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-mark">
+      <!-- Architecture/diagram flowchart icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="5" height="4" rx="1"/>
+        <rect x="16" y="3" width="5" height="4" rx="1"/>
+        <rect x="9.5" y="17" width="5" height="4" rx="1"/>
+        <path d="M5.5 7v3.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V7"/>
+        <line x1="12" y1="11.5" x2="12" y2="17"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>SA Diagram Studio</h1>
+      <p>Enterprise implementation — powered by real architecture patterns</p>
+      <p style="font-size:0.65rem; color:var(--text-muted); margin-top:3px;">Created by: Philip Bloch, Staff Solutions Architect</p>
+    </div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark theme" aria-label="Toggle theme">
+      <svg id="iconDark" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <svg id="iconLight" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+    <div class="header-badge">Claude Opus</div>
+  </header>
+
+  <div class="main">
+
+    <!-- INPUT PANEL -->
+    <div class="input-panel">
+      <div class="panel-label">Migration Description</div>
+
+      <!-- Mode toggle -->
+      <div class="input-mode-toggle">
+        <button class="input-tab active" id="tab-drive" onclick="switchInputMode('drive')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-9l-3 5H2"/><path d="M2 12l5-9h9l5 9"/><path d="M13 7l3 5"/></svg>
+          Google Drive
+        </button>
+        <button class="input-tab" id="tab-pdf" onclick="switchInputMode('pdf')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Upload PDF
+        </button>
+        <button class="input-tab" id="tab-paste" onclick="switchInputMode('paste')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+          Paste Text
+        </button>
+      </div>
+
+      <!-- Paste mode -->
+      <textarea id="description" style="display:none" placeholder="Describe the merchant's current platform and migration goals. e.g.:
+
+ABC Inc. Enterprise brand is migrating from Salesforce Commerce Cloud (SFRA) to Shopify Plus. Stack includes Infor M3 ERP, Comestri as PIM/middleware, NewStore OMS + POS, Salesforce CRM suite (Service, Marketing, Data Cloud), Constructor.io search, Adyen payments. Three stores: AU+NZ, US, UK+EU. ~66K products, 400K customers."></textarea>
+
+      <!-- PDF mode -->
+      <div id="pdfZone" style="display:none">
+        <input type="file" id="pdfFileInput" accept=".pdf" style="display:none" onchange="handlePdfFile(this.files[0])">
+        <div class="pdf-dropzone" id="pdfDropzone"
+             onclick="document.getElementById('pdfFileInput').click()"
+             ondragover="onDragOver(event)"
+             ondragleave="onDragLeave(event)"
+             ondrop="onDrop(event)">
+          <div class="dropzone-icon">📄</div>
+          <div class="dropzone-label">Drop a PDF here or click to browse</div>
+          <div class="dropzone-hint">Scope documents, VTP, SOWs, RFPs, architecture briefs — PDF only</div>
+        </div>
+        <div class="pdf-status" id="pdfStatus" style="display:none"></div>
+      </div>
+
+      <!-- Google Drive mode -->
+      <div id="driveZone">
+        <div class="drive-url-row">
+          <input type="text" id="driveUrl" class="drive-input"
+                 placeholder="Paste a Google Drive file URL…"
+                 onkeydown="if(event.key==='Enter') driveLoad()"
+                 oninput="clearDriveStatus()">
+          <button class="btn-drive-load" id="driveLoadBtn" onclick="driveLoad()">Attach</button>
+        </div>
+        <div class="drive-status" id="driveStatus" style="display:none"></div>
+      </div>
+
+      <div class="context-grid">
+        <div class="field">
+          <label class="field-label" for="sourcePlatform">Source Platform</label>
+          <div class="select-wrap">
+            <select id="sourcePlatform">
+              <option value="">— Select source platform —</option>
+              <option value="sfcc">Salesforce Commerce Cloud (SFCC)</option>
+              <option value="magento">Magento / Adobe Commerce</option>
+              <option value="commercetools">Commercetools</option>
+              <option value="sap">SAP Hybris / CX Commerce</option>
+              <option value="hcl">HCL Commerce / WebSphere</option>
+              <option value="oracle">Oracle ATG / CX Commerce</option>
+              <option value="centra">Centra / Custom Headless</option>
+              <option value="bigcommerce">BigCommerce</option>
+              <option value="woocommerce">WooCommerce</option>
+              <option value="bespoke">Bespoke / Legacy Platform</option>
+              <option value="other">Other Platform</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="shopifyTier">Shopify Tier</label>
+          <div class="select-wrap">
+            <select id="shopifyTier">
+              <option value="">— Select Shopify tier —</option>
+              <option value="plus">Shopify Plus</option>
+              <option value="enterprise">Shopify Enterprise (Commerce Components by Shopify)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="archStyle">Storefront Architecture</label>
+          <div class="select-wrap">
+            <select id="archStyle">
+              <option value="">— Select storefront architecture —</option>
+              <option value="headed">Headed — Liquid / Online Store 2.0</option>
+              <option value="hydrogen">Headless — Hydrogen + Oxygen</option>
+              <option value="nextjs">Headless — Next.js on Vercel</option>
+              <option value="nuxt">Headless — NuxtJS</option>
+              <option value="blended">Blended — Headed + Headless</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <span class="hint">⌘↵ to generate</span>
+        <button class="btn-generate" id="generateBtn" onclick="generate()">
+          <div class="spinner" id="spinner"></div>
+          <span id="btnText">Generate Diagrams</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="error" id="errorEl"></div>
+
+    <!-- STATUS BAR -->
+    <div id="statusBar">
+      <div class="status-pulse"></div>
+      <span id="statusText"></span><span class="status-dots"></span>
+    </div>
+
+    <!-- SAVE BAR -->
+    <div id="saveBar">
+      <span class="save-path" id="savePath"></span>
+      <button class="btn-save" id="saveAllBtn" onclick="saveAll()">💾 Save Project</button>
+    </div>
+
+    <!-- PLACEHOLDER SKELETONS -->
+    <div id="placeholders" class="placeholder-cards" style="display:none; grid-template-columns: repeat(3,1fr);">
+      <div class="skeleton-card">
+        <div class="skeleton-icon">🏗️</div>
+        <div class="skeleton-label">Target Architecture</div>
+        <div class="skeleton-lines"><div class="shimmer"></div><div class="shimmer"></div><div class="shimmer"></div></div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-icon">🔀</div>
+        <div class="skeleton-label">Data Flow</div>
+        <div class="skeleton-lines"><div class="shimmer"></div><div class="shimmer"></div><div class="shimmer"></div></div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-icon">🔌</div>
+        <div class="skeleton-label">Integration Map</div>
+        <div class="skeleton-lines"><div class="shimmer"></div><div class="shimmer"></div><div class="shimmer"></div></div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-icon">📋</div>
+        <div class="skeleton-label">Migration Phases</div>
+        <div class="skeleton-lines"><div class="shimmer"></div><div class="shimmer"></div><div class="shimmer"></div></div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-icon">⏱️</div>
+        <div class="skeleton-label">Order Sequence</div>
+        <div class="skeleton-lines"><div class="shimmer"></div><div class="shimmer"></div><div class="shimmer"></div></div>
+      </div>
+    </div>
+
+    <!-- DIAGRAMS -->
+    <div class="diagrams-grid" id="diagramsGrid"></div>
+
+  </div>
+
+  <script>
+    /* ── Mermaid theme vars ── */
+    const MERMAID_THEMES = {
+      dark: {
+        background:            '#0f1623',
+        primaryColor:          '#1a2e4a',
+        primaryBorderColor:    '#2d4a6e',
+        primaryTextColor:      '#c8d8f0',
+        secondaryColor:        '#0f1623',
+        tertiaryColor:         '#162035',
+        lineColor:             '#3d5888',
+        textColor:             '#a0b8d8',
+        mainBkg:               '#1a2e4a',
+        nodeBorder:            '#2d4a6e',
+        clusterBkg:            '#0f1623',
+        clusterBorder:         '#243044',
+        defaultLinkColor:      '#4a6888',
+        titleColor:            '#96bf48',
+        edgeLabelBackground:   '#162035',
+        fontFamily:            'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+        fontSize:              '13px',
+        actorBkg:              '#1a2e4a',
+        actorBorder:           '#2d4a6e',
+        actorTextColor:        '#c8d8f0',
+        actorLineColor:        '#3d5888',
+        signalColor:           '#96bf48',
+        signalTextColor:       '#e8edf5',
+        labelBoxBkgColor:      '#162035',
+        labelBoxBorderColor:   '#243044',
+        labelTextColor:        '#a0b8d8',
+        loopTextColor:         '#a0b8d8',
+        noteBkgColor:          '#1e3850',
+        noteBorderColor:       '#2d4a6e',
+        noteTextColor:         '#c8d8f0',
+        activationBkgColor:    '#243044',
+        activationBorderColor: '#96bf48',
+      },
+      light: {
+        background:            '#ffffff',
+        primaryColor:          '#eaf4ef',
+        primaryBorderColor:    '#b3d4c8',
+        primaryTextColor:      '#202223',
+        secondaryColor:        '#f6f6f7',
+        tertiaryColor:         '#f0f9f5',
+        lineColor:             '#6d7175',
+        textColor:             '#374151',
+        mainBkg:               '#eaf4ef',
+        nodeBorder:            '#b3d4c8',
+        clusterBkg:            '#f6f6f7',
+        clusterBorder:         '#e1e3e5',
+        defaultLinkColor:      '#6d7175',
+        titleColor:            '#008060',
+        edgeLabelBackground:   '#f6f6f7',
+        fontFamily:            'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+        fontSize:              '13px',
+        actorBkg:              '#eaf4ef',
+        actorBorder:           '#b3d4c8',
+        actorTextColor:        '#202223',
+        actorLineColor:        '#6d7175',
+        signalColor:           '#008060',
+        signalTextColor:       '#202223',
+        labelBoxBkgColor:      '#f6f6f7',
+        labelBoxBorderColor:   '#e1e3e5',
+        labelTextColor:        '#6d7175',
+        loopTextColor:         '#6d7175',
+        noteBkgColor:          '#e6f4ef',
+        noteBorderColor:       '#008060',
+        noteTextColor:         '#202223',
+        activationBkgColor:    '#e1e3e5',
+        activationBorderColor: '#008060',
+      }
+    };
+
+    function initMermaid(theme) {
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'loose',
+        theme: 'base',
+        themeVariables: MERMAID_THEMES[theme],
+      });
+    }
+
+    /* ── Theme switching ── */
+    let currentTheme = localStorage.getItem('theme') || 'light';
+
+    function applyTheme(theme) {
+      currentTheme = theme;
+      document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : '');
+      document.getElementById('iconDark').style.display  = theme === 'dark'  ? 'block' : 'none';
+      document.getElementById('iconLight').style.display = theme === 'light' ? 'block' : 'none';
+      localStorage.setItem('theme', theme);
+    }
+
+    async function toggleTheme() {
+      const next = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      initMermaid(next);
+      // Re-render any visible diagrams with new mermaid theme
+      for (const [type, code] of Object.entries(codes)) {
+        await renderDiagram(type, code);
+      }
+    }
+
+    // Init on load
+    initMermaid(currentTheme);
+    applyTheme(currentTheme);
+
+
+    /* ── Diagram metadata ── */
+    const META = {
+      target_architecture: {
+        icon: '🏗️', label: 'Target Architecture',
+        desc: 'Shopify target-state: storefront, core platform & enterprise systems',
+        accent: '#96bf48', wide: false,
+      },
+      data_flow: {
+        icon: '🔀', label: 'Data Flow',
+        desc: 'Product sync, order chain, inventory, customer events & analytics pipeline',
+        accent: '#5c6ac4', wide: true,
+      },
+      integration_map: {
+        icon: '🔌', label: 'Integration Map',
+        desc: 'Full integration topology — all third-party systems and connection types',
+        accent: '#f49342', wide: false,
+      },
+      migration_phases: {
+        icon: '📋', label: 'Migration Phases',
+        desc: 'Programme roadmap from Discovery through Post-Launch Optimisation',
+        accent: '#47c1bf', wide: true,
+      },
+      sequence: {
+        icon: '⏱️', label: 'Order Sequence',
+        desc: 'End-to-end order lifecycle: checkout → ERP/OMS → fulfillment → tracking',
+        accent: '#e3821e', wide: false,
+      },
+    };
+
+    const RENDER_ORDER = ['target_architecture', 'data_flow', 'integration_map', 'migration_phases', 'sequence'];
+
+    const codes = {};
+
+    /* ── Input mode ── */
+    let inputMode = 'drive';
+    let extractedPdfText = '';
+    let driveText = '';
+    let driveFileName = '';
+
+    // Pre-fill from server-injected data (?drive=, ?context=, ?pdf=, ?source=, ?tier=, ?arch=)
+    (function() {
+      const pre = {{ prefill | tojson }};
+      if (pre.drive_url) {
+        switchInputMode('drive');
+        document.getElementById('driveUrl').value = pre.drive_url;
+        driveLoad();
+      } else if (pre.context) {
+        switchInputMode('paste');
+        document.getElementById('description').value = pre.context;
+        if (pre.pdf_name) {
+          const status = document.getElementById('pdfStatus');
+          status.className = 'pdf-status success';
+          status.style.display = 'flex';
+          status.innerHTML = `✓ "${pre.pdf_name}" extracted (${pre.context.length.toLocaleString()} chars) — switched to Paste mode`;
+        }
+      }
+      if (pre.source) document.getElementById('sourcePlatform').value = pre.source;
+      if (pre.tier)   document.getElementById('shopifyTier').value    = pre.tier;
+      if (pre.arch)   document.getElementById('archStyle').value      = pre.arch;
+      if (pre.drive_url || pre.context || pre.source || pre.tier || pre.arch) validateInput();
+    })();
+
+    function switchInputMode(mode) {
+      inputMode = mode;
+      document.getElementById('description').style.display = mode === 'paste' ? 'block' : 'none';
+      document.getElementById('pdfZone').style.display     = mode === 'pdf'   ? 'block' : 'none';
+      document.getElementById('driveZone').style.display   = mode === 'drive' ? 'block' : 'none';
+      document.getElementById('tab-paste').classList.toggle('active', mode === 'paste');
+      document.getElementById('tab-pdf').classList.toggle('active', mode === 'pdf');
+      document.getElementById('tab-drive').classList.toggle('active', mode === 'drive');
+      validateInput();
+    }
+
+    function validateInput() {
+      let hasContent;
+      if (inputMode === 'pdf')        hasContent = !!extractedPdfText;
+      else if (inputMode === 'drive') hasContent = !!driveText;
+      else                            hasContent = !!document.getElementById('description').value.trim();
+      const hasSource = !!document.getElementById('sourcePlatform').value;
+      const hasTier   = !!document.getElementById('shopifyTier').value;
+      const hasArch   = !!document.getElementById('archStyle').value;
+      document.getElementById('generateBtn').disabled = !(hasContent && hasSource && hasTier && hasArch);
+    }
+
+    /* ── Google Drive ── */
+    function extractDriveFileId(url) {
+      // Handles:
+      //   /file/d/FILE_ID/...
+      //   /document/d/FILE_ID/...
+      //   /spreadsheets/d/FILE_ID/...
+      //   /presentation/d/FILE_ID/...
+      //   ?id=FILE_ID
+      const patterns = [
+        /\/d\/([a-zA-Z0-9_-]{20,})/,
+        /[?&]id=([a-zA-Z0-9_-]{20,})/,
+      ];
+      for (const re of patterns) {
+        const m = url.match(re);
+        if (m) return m[1];
+      }
+      return null;
+    }
+
+    async function driveLoad() {
+      const url = document.getElementById('driveUrl').value.trim();
+      if (!url) return;
+      const fileId = extractDriveFileId(url);
+      if (!fileId) {
+        setDriveStatus('error', 'Could not extract a file ID from this URL. Make sure it\'s a Google Drive link.');
+        return;
+      }
+      const btn = document.getElementById('driveLoadBtn');
+      btn.disabled = true; btn.textContent = 'Loading…';
+      driveText = ''; driveFileName = '';
+      validateInput();
+      setDriveStatus('loading', 'Fetching file from Google Drive…');
+      try {
+        const res  = await fetch('/drive-fetch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file_id: fileId, file_name: '' }),
+        });
+        const data = await res.json();
+        if (!res.ok) { setDriveStatus('error', data.error || 'Could not load file.'); return; }
+        driveText     = data.text;
+        driveFileName = data.name;
+        setDriveStatus('success',
+          `✓ "${data.name}" attached (${data.text.length.toLocaleString()} chars) — ready to generate`);
+        validateInput();
+      } catch (err) {
+        setDriveStatus('error', 'Load error: ' + err.message);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Attach';
+      }
+    }
+
+    function setDriveStatus(type, msg) {
+      const el = document.getElementById('driveStatus');
+      el.className = 'drive-status ' + type;
+      el.style.display = 'flex';
+      el.textContent = msg;
+    }
+    function clearDriveStatus() {
+      if (driveText) { driveText = ''; driveFileName = ''; validateInput(); }
+      document.getElementById('driveStatus').style.display = 'none';
+    }
+
+    /* ── Drag-and-drop ── */
+    function onDragOver(e) {
+      e.preventDefault();
+      document.getElementById('pdfDropzone').classList.add('drag-over');
+    }
+    function onDragLeave(e) {
+      document.getElementById('pdfDropzone').classList.remove('drag-over');
+    }
+    function onDrop(e) {
+      e.preventDefault();
+      document.getElementById('pdfDropzone').classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) handlePdfFile(file);
+    }
+
+    /* ── PDF extraction ── */
+    async function handlePdfFile(file) {
+      if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
+        setPdfStatus('error', 'Only PDF files are supported.');
+        return;
+      }
+      extractedPdfText = '';
+      setPdfStatus('loading', `Extracting text from "${file.name}"…`);
+
+      const fd = new FormData();
+      fd.append('file', file);
+      try {
+        const res = await fetch('/extract-pdf', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) {
+          setPdfStatus('error', data.error || 'Extraction failed.');
+          return;
+        }
+        extractedPdfText = data.text;
+        setPdfStatus('success',
+          `✓ "${file.name}" — ${data.pages} page${data.pages !== 1 ? 's' : ''} extracted (${extractedPdfText.length.toLocaleString()} chars)`,
+          true
+        );
+        validateInput();
+      } catch (err) {
+        setPdfStatus('error', 'Upload error: ' + err.message);
+      }
+    }
+
+    function setPdfStatus(type, msg, showClear = false) {
+      const el = document.getElementById('pdfStatus');
+      el.className = 'pdf-status ' + type;
+      el.style.display = 'flex';
+      el.innerHTML = msg + (showClear
+        ? ' <button class="pdf-clear" onclick="clearPdf()">✕ Clear</button>'
+        : '');
+    }
+
+    function clearPdf() {
+      extractedPdfText = '';
+      document.getElementById('pdfFileInput').value = '';
+      document.getElementById('pdfStatus').style.display = 'none';
+      validateInput();
+    }
+
+    /* ── Generate ── */
+    async function generate() {
+      let description;
+      if (inputMode === 'pdf') {
+        if (!extractedPdfText) { showError('Please upload and extract a PDF first.'); return; }
+        description = extractedPdfText;
+      } else if (inputMode === 'drive') {
+        if (!driveText) { showError('Please select a file from Google Drive first.'); return; }
+        description = driveText;
+      } else {
+        description = document.getElementById('description').value.trim();
+        if (!description) { showError('Please enter a migration description.'); return; }
+      }
+
+      setLoading(true);
+      hideError();
+      document.getElementById('placeholders').style.display = 'grid';
+      document.getElementById('diagramsGrid').innerHTML = '';
+      document.getElementById('saveBar').style.display = 'none';
+      setStatus('Generating Shopify migration diagrams with Claude Opus');
+
+      Object.keys(codes).forEach(k => delete codes[k]);
+
+      try {
+        const res = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            description,
+            source_platform: document.getElementById('sourcePlatform').value,
+            shopify_tier:    document.getElementById('shopifyTier').value,
+            architecture_style: document.getElementById('archStyle').value,
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Something went wrong.'); return; }
+
+        const keys = RENDER_ORDER.filter(k => data[k])
+          .concat(Object.keys(data).filter(k => !RENDER_ORDER.includes(k) && data[k]));
+
+        let i = 0;
+        for (const type of keys) {
+          i++;
+          codes[type] = data[type];
+          setStatus(`Rendering diagram ${i} of ${keys.length}: ${(META[type] || {}).label || type}`);
+          buildCard(type);
+          await renderDiagram(type, data[type]);
+        }
+
+        document.getElementById('placeholders').style.display = 'none';
+        clearStatus();
+        document.getElementById('saveBar').style.display = 'flex';
+
+      } catch (err) {
+        showError('Network error: ' + err.message);
+        document.getElementById('placeholders').style.display = 'none';
+        clearStatus();
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    /* ── Build card DOM ── */
+    function buildCard(type) {
+      const grid = document.getElementById('diagramsGrid');
+      const m = META[type] || { icon: '📊', label: type, desc: '', accent: '#6b7fa3', wide: false };
+
+      const card = document.createElement('div');
+      card.className = 'diagram-card' + (m.wide ? ' wide' : '');
+      card.id = 'card-' + type;
+      card.style.setProperty('--accent', m.accent);
+
+      card.innerHTML = `
+        <div class="card-stripe"></div>
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              <span class="card-icon">${m.icon}</span>
+              ${m.label}
+            </div>
+            <div class="card-desc">${m.desc}</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-xs" onclick="exportPng('${type}')">↓ PNG</button>
+            <button class="btn-xs" id="code-toggle-${type}" onclick="toggleCode('${type}')">⟨⟩ Code</button>
+            <button class="btn-xs" id="copy-${type}" onclick="copyCode('${type}')">Copy</button>
+          </div>
+        </div>
+        <div class="diagram-render" id="render-${type}">
+          <div class="card-skeleton">
+            <div class="shimmer"></div>
+            <div class="shimmer" style="width:75%"></div>
+            <div class="shimmer" style="width:55%"></div>
+          </div>
+        </div>
+        <div class="code-panel" id="code-${type}"><pre id="pre-${type}"></pre></div>
+      `;
+      grid.appendChild(card);
+    }
+
+    /* ── Sanitize Mermaid: quote edge labels containing parens/brackets ── */
+    function sanitizeMermaid(code) {
+      // Match unquoted edge labels: |label| where label doesn't start with "
+      return code.replace(/\|([^|"\n]+)\|/g, (match, label) => {
+        if (/[()[\]{}]/.test(label)) {
+          return '|"' + label.replace(/"/g, '\\"') + '"|';
+        }
+        return match;
+      });
+    }
+
+    /* ── Render mermaid into card ── */
+    async function renderDiagram(type, code) {
+      const card    = document.getElementById('card-' + type);
+      const renderEl = document.getElementById('render-' + type);
+      const preEl   = document.getElementById('pre-' + type);
+      if (!card) return;
+
+      preEl.textContent = code;
+      const sanitized = sanitizeMermaid(code);
+
+      try {
+        const uid = 'mmd-' + type + '-' + Date.now();
+        const { svg } = await mermaid.render(uid, sanitized);
+        renderEl.innerHTML = svg;
+      } catch (e) {
+        renderEl.innerHTML = `<div class="render-error">⚠ Render error\n${e.message}</div>`;
+      }
+
+      card.classList.add('visible');
+    }
+
+    /* ── Code toggle ── */
+    function toggleCode(type) {
+      const panel  = document.getElementById('code-' + type);
+      const btn    = document.getElementById('code-toggle-' + type);
+      const open   = panel.style.display !== 'block';
+      panel.style.display = open ? 'block' : 'none';
+      btn.classList.toggle('active', open);
+    }
+
+    /* ── Copy ── */
+    async function copyCode(type) {
+      const btn = document.getElementById('copy-' + type);
+      await navigator.clipboard.writeText(codes[type] || '');
+      btn.textContent = '✓ Copied';
+      btn.classList.add('active');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('active'); }, 2000);
+    }
+
+    /* ── Loading state ── */
+    function setLoading(on) {
+      document.getElementById('spinner').style.display = on ? 'block' : 'none';
+      document.getElementById('btnText').textContent  = on ? 'Generating…' : 'Generate Diagrams';
+      document.getElementById('generateBtn').disabled = on;
+    }
+
+    function setStatus(msg) {
+      const bar = document.getElementById('statusBar');
+      bar.style.display = 'flex';
+      document.getElementById('statusText').textContent = msg;
+    }
+    function clearStatus() { document.getElementById('statusBar').style.display = 'none'; }
+
+    function showError(msg) {
+      const el = document.getElementById('errorEl');
+      el.textContent = '⚠ ' + msg;
+      el.style.display = 'block';
+    }
+    function hideError() { document.getElementById('errorEl').style.display = 'none'; }
+
+    /* ── SVG → high-res PNG ── */
+    async function svgToPngBase64(type) {
+      const svgEl = document.querySelector('#render-' + type + ' svg');
+      if (!svgEl) return null;
+
+      // Use the SVG's intrinsic viewBox dimensions — NOT the displayed bounding rect.
+      // This gives full vector resolution regardless of how small the card is rendered.
+      const vb = svgEl.viewBox && svgEl.viewBox.baseVal;
+      const hasVB = vb && vb.width > 0 && vb.height > 0;
+
+      const natW = hasVB ? vb.width
+        : (parseFloat(svgEl.getAttribute('width'))  || svgEl.getBoundingClientRect().width  || 1600);
+      const natH = hasVB ? vb.height
+        : (parseFloat(svgEl.getAttribute('height')) || svgEl.getBoundingClientRect().height || 1000);
+
+      // Upscale so the shortest dimension is at least 3000px
+      const MIN_PX = 3000;
+      const dpr    = Math.max(1, MIN_PX / Math.min(natW, natH));
+      const cW = Math.round(natW * dpr);
+      const cH = Math.round(natH * dpr);
+
+      const clone = svgEl.cloneNode(true);
+      // Stamp explicit dimensions + preserve viewBox so content scales correctly
+      clone.setAttribute('width',  natW);
+      clone.setAttribute('height', natH);
+      if (hasVB) clone.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.width} ${vb.height}`);
+      clone.setAttribute('xmlns',       'http://www.w3.org/2000/svg');
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+      // Remove any mermaid inline max-width
+      clone.style.maxWidth = 'none';
+
+      const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      bg.setAttribute('width', natW); bg.setAttribute('height', natH);
+      const bgColor = MERMAID_THEMES[currentTheme].background;
+      bg.setAttribute('fill', bgColor);
+      clone.insertBefore(bg, clone.firstChild);
+
+      const uri = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(
+        new XMLSerializer().serializeToString(clone)
+      )));
+
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = cW; c.height = cH;
+          const ctx = c.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(0, 0, cW, cH);
+          ctx.scale(dpr, dpr);
+          ctx.drawImage(img, 0, 0, natW, natH);
+          resolve(c.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve(null);
+        img.src = uri;
+      });
+    }
+
+    /* ── Export single PNG ── */
+    async function exportPng(type) {
+      const png = await svgToPngBase64(type);
+      if (!png) return;
+      const a = document.createElement('a');
+      a.href = png;
+      a.download = type.replace(/_/g, '-') + '.png';
+      a.click();
+    }
+
+    /* ── Save all ── */
+    async function saveAll() {
+      const name = prompt('Enter a project name for this save:', '');
+      if (name === null) return;
+      if (!name.trim()) { showError('Please enter a project name.'); return; }
+
+      const btn = document.getElementById('saveAllBtn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+
+      const diagrams = [];
+      for (const type of Object.keys(codes)) {
+        if (!codes[type]) continue;
+        const png = await svgToPngBase64(type);
+        diagrams.push({ type, mmd: codes[type], png_base64: png || '' });
+      }
+
+      try {
+        const res = await fetch('/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            description: inputMode === 'pdf'
+              ? extractedPdfText
+              : document.getElementById('description').value.trim(),
+            diagrams,
+            project_name: name.trim(),
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          btn.textContent = '✓ Saved';
+          btn.classList.add('done');
+          document.getElementById('savePath').textContent = data.path;
+          setTimeout(() => {
+            btn.textContent = '💾 Save Project';
+            btn.classList.remove('done');
+            btn.disabled = false;
+          }, 3500);
+        } else {
+          showError(data.error || 'Save failed.');
+          btn.textContent = '💾 Save Project'; btn.disabled = false;
+        }
+      } catch (err) {
+        showError('Save error: ' + err.message);
+        btn.textContent = '💾 Save Project'; btn.disabled = false;
+      }
+    }
+
+    /* ── Keyboard shortcut + live textarea validation ── */
+    document.getElementById('description').addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate();
+    });
+    document.getElementById('description').addEventListener('input', validateInput);
+    document.getElementById('sourcePlatform').addEventListener('change', validateInput);
+    document.getElementById('shopifyTier').addEventListener('change', validateInput);
+    document.getElementById('archStyle').addEventListener('change', validateInput);
+
+    // Set initial state
+    validateInput();
+  </script>
+</body>
+</html>
