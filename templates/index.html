@@ -1005,29 +1005,6 @@ ABC Inc. Enterprise brand is migrating from Salesforce Commerce Cloud (SFRA) to 
     let driveText = '';
     let driveFileName = '';
 
-    // Pre-fill from server-injected data (?drive=, ?context=, ?pdf=, ?source=, ?tier=, ?arch=)
-    (function() {
-      const pre = {{ prefill | tojson }};
-      if (pre.drive_url) {
-        switchInputMode('drive');
-        document.getElementById('driveUrl').value = pre.drive_url;
-        driveLoad();
-      } else if (pre.context) {
-        switchInputMode('paste');
-        document.getElementById('description').value = pre.context;
-        if (pre.pdf_name) {
-          const status = document.getElementById('pdfStatus');
-          status.className = 'pdf-status success';
-          status.style.display = 'flex';
-          status.innerHTML = `✓ "${pre.pdf_name}" extracted (${pre.context.length.toLocaleString()} chars) — switched to Paste mode`;
-        }
-      }
-      if (pre.source) document.getElementById('sourcePlatform').value = pre.source;
-      if (pre.tier)   document.getElementById('shopifyTier').value    = pre.tier;
-      if (pre.arch)   document.getElementById('archStyle').value      = pre.arch;
-      if (pre.drive_url || pre.context || pre.source || pre.tier || pre.arch) validateInput();
-    })();
-
     function switchInputMode(mode) {
       inputMode = mode;
       document.getElementById('description').style.display = mode === 'paste' ? 'block' : 'none';

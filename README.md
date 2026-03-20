@@ -55,19 +55,6 @@ The app runs on [http://localhost:5001](http://localhost:5001).
    - Toggle light/dark theme
 6. Click **Save Project** to save all diagrams (`.mmd` + `.png`) to `diagrams/`
 
-## URL parameters
-
-Pre-fill the form via query parameters:
-
-| Parameter | Description |
-|-----------|-------------|
-| `?drive=<url>` | Auto-attach a Google Drive file |
-| `?pdf=/path/to/file.pdf` | Extract and pre-fill from a local PDF |
-| `?context=...` | Pre-fill the description text |
-| `?source=sfcc` | Pre-select source platform |
-| `?tier=plus` | Pre-select Shopify tier |
-| `?arch=hydrogen` | Pre-select storefront architecture |
-
 ## Supported source platforms
 
 SFCC, Magento / Adobe Commerce, Commercetools, SAP Hybris, HCL Commerce, Oracle ATG, Centra, BigCommerce, WooCommerce, Bespoke / Legacy

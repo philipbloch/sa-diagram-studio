@@ -272,40 +272,7 @@ def drive_fetch():
 
 @app.route("/")
 def index():
-    prefill = {}
-
-    # ?drive=<google-drive-url> — pre-fill drive URL so the app auto-loads it
-    drive_url = request.args.get("drive", "").strip()
-    if drive_url:
-        prefill["drive_url"] = drive_url
-
-    # ?pdf=/path/to/file.pdf — extract server-side and inject as pre-filled text
-    if not prefill.get("drive_url"):
-        pdf_path = request.args.get("pdf", "").strip()
-        if pdf_path and os.path.isfile(pdf_path) and pdf_path.lower().endswith(".pdf"):
-            try:
-                reader = PdfReader(pdf_path)
-                pages = [page.extract_text() or "" for page in reader.pages]
-                text = "\n\n".join(p.strip() for p in pages if p.strip())
-                if text.strip():
-                    prefill["context"] = text
-                    prefill["pdf_name"] = os.path.basename(pdf_path)
-            except Exception as e:
-                print(f"PDF pre-fill error: {e}")
-
-    # ?context=... — plain text pre-fill
-    if not prefill.get("context") and not prefill.get("drive_url"):
-        ctx = request.args.get("context", "").strip()
-        if ctx:
-            prefill["context"] = ctx
-
-    # Other params
-    for key in ("source", "tier", "arch"):
-        val = request.args.get(key, "").strip()
-        if val:
-            prefill[key] = val
-
-    return render_template("index.html", prefill=prefill)
+    return render_template("index.html")
 
 
 @app.route("/generate", methods=["POST"])
